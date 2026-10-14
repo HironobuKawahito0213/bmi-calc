@@ -1,0 +1,38 @@
+{
+  "title": "BMI計算機の使い方",
+  "description": "身長と体重を入力すると BMI を計算してくれるシンプルなフォームです。",
+  "url": "file:///home/user/bmi-calc/bmi-calc.html",
+  "viewport": { "width": 1280, "height": 720 },
+  "zoom": 1.6,
+  "intro": "BMI計算機の使い方を、3つのステップで説明します",
+  "outro": "以上で BMI計算機の説明は終わりです",
+  "steps": [
+    {
+      "caption": "これが BMI計算機の画面です。身長と体重を入力する欄と、計算ボタンがあります",
+      "highlight": "h1"
+    },
+    {
+      "action": "fill",
+      "selector": "#height",
+      "value": "170",
+      "caption": "まず「身長」の欄に、身長を cm 単位で入力します"
+    },
+    {
+      "action": "fill",
+      "selector": "#weight",
+      "value": "65",
+      "caption": "次に「体重」の欄に、体重を kg 単位で入力します"
+    },
+    {
+      "action": "click",
+      "selector": "#calc",
+      "caption": "「計算する」ボタンを押すと、BMI が計算されます",
+      "resultShot": true
+    },
+    {
+      "highlight": "#bmi",
+      "caption": "BMI の欄に計算結果が表示されました。この欄は編集できません",
+      "note": "BMI = 体重(kg) ÷ 身長(m)²。18.5〜25 が標準とされています。"
+    }
+  ]
+}
