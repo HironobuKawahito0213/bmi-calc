@@ -82,6 +82,24 @@ bash $SKILL/scripts/make_video.sh scenario.json ./manual-video --gif
 ユーザーには出力場所と、動画の長さ・ステップ数、確認して気づいた点（例: 「送信後のメッセージが一瞬で消えるので `wait` を長めにしました」）を伝える。
 動画や PNG は Read では映像として再生できないので、ユーザーが自分で再生して確認する前提で、見どころを文章で添える。
 
+## ログインが必要なサイト (SaaS、管理画面、claude.ai など)
+
+毎回まっさらなブラウザで録画するとログイン画面しか撮れない。専用プロファイルに一度ログインして使い回す。
+
+1. `node scripts/login.js ~/.manual-video/<name> <URL> [--channel chrome]` でブラウザを開き、手でログインして Enter
+2. シナリオに `"profile": "~/.manual-video/<name>"` を書く（必要なら `"channel": "chrome"` も。実物の Chrome を使うとボット判定を避けやすい）
+3. profile 指定時はブラウザが表示された状態で録画される（ヘッドレスを弾くサイトが多いため）
+
+この環境でログインできない場合は、ここまで整えてユーザーに手元で実行してもらう。
+その際は `assets/examples/claude-code-web/README.md` のような「準備 → ログイン → セレクタ確認 → 録画」の手順書を一緒に渡す。
+
+## セレクタが分からないとき
+
+`node scripts/inspect.js <URL> [--profile dir] [--wait ms]` で、ページ上のボタン・リンク・入力欄と
+その選び方 (`#id`、`[aria-label=...]`、`button:has-text("...")`) を一覧にし、`inspect.png` も撮る。
+ソースが手元にない SaaS や、ビルド後に id が変わる SPA ではソースを読むよりこちらが早い。
+文言が揺れそうなボタンは `role=button[name=/送信|send/i]` のように正規表現で書くと壊れにくい。
+
 ## よくある詰まりどころ
 
 - **要素が見つからない**: Playwright のセレクタは `#id`、`text=計算する`、`button:has-text("送信")`、`[name=email]`、`role=button[name="保存"]` などが使える。開発者ツールで確認した `id` が最も壊れにくい。
@@ -95,7 +113,10 @@ bash $SKILL/scripts/make_video.sh scenario.json ./manual-video --gif
 
 - `scripts/make_video.sh` — 一括実行（narrate → record → compose）
 - `scripts/record.js` — Playwright で操作・録画・スクショ・manual.md 生成
+- `scripts/login.js` — ログイン状態を専用プロファイルに保存
+- `scripts/inspect.js` — ページ上の要素とセレクタ候補を一覧表示
 - `scripts/narrate.py` — 字幕文から音声生成（任意）
 - `scripts/compose.py` — webm → mp4 / gif 変換、音声合成
 - `assets/example-scenario.json` — BMI 計算機のシナリオ例
+- `assets/examples/claude-code-web/` — claude.ai/code (要ログイン) のシナリオ例と手元で録画する手順書
 - `references/scenario-schema.md` — シナリオ JSON の全フィールド

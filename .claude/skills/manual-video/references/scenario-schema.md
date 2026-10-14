@@ -8,6 +8,9 @@
   "viewport": { "width": 1280, "height": 720 },  // 任意。動画サイズにもなる
   "zoom": 1,                          // 任意。小さな画面を拡大 (1.3〜1.8 が実用的)
   "locale": "ja-JP",                  // 任意
+  "profile": "~/.manual-video/app",   // 任意。login.js で作ったログイン済みプロファイル。指定時はブラウザ表示で録画
+  "channel": "chrome",                // 任意。Playwright 同梱 Chromium の代わりに実物の Chrome/Edge を使う
+  "headless": false,                  // 任意。profile 指定時に true でヘッドレス化 (ボット判定に注意)
   "intro": "〇〇の使い方を説明します", // 任意。null か "" でタイトルカードを省略
   "outro": "以上で説明は終わりです",   // 任意。null か "" で終了カードを省略
   "promptAnswer": "",                 // 任意。window.prompt への入力値

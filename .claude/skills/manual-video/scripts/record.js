@@ -135,14 +135,27 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
 
 // ---------- メイン ----------
 (async () => {
-  const browser = await chromium.launch({ headless: !headed });
-  const context = await browser.newContext({
+  // ログインが必要なサイトは "profile" に専用プロファイルのディレクトリを指定する
+  // (先に login.js で一度ログインしておく)。profile 指定時は既定でブラウザを表示する
+  // (ログイン系サイトはヘッドレスを弾くことが多いため)。
+  const ctxOpts = {
     viewport: { width: vw, height: vh },
     recordVideo: { dir: videoDir, size: { width: vw, height: vh } },
     locale: scenario.locale || 'ja-JP',
     deviceScaleFactor: 1,
-  });
-  const page = await context.newPage();
+  };
+  let browser = null, context, page;
+  if (scenario.profile) {
+    const dir = scenario.profile.replace(/^~(?=$|\/)/, process.env.HOME || '');
+    fs.mkdirSync(dir, { recursive: true });
+    const headless = headed ? false : (scenario.headless === true);
+    context = await chromium.launchPersistentContext(dir, { ...ctxOpts, headless, channel: scenario.channel || undefined });
+    page = context.pages()[0] || (await context.newPage());
+  } else {
+    browser = await chromium.launch({ headless: !headed, channel: scenario.channel || undefined });
+    context = await browser.newContext(ctxOpts);
+    page = await context.newPage();
+  }
   const t0 = Date.now();
   const rel = () => Date.now() - t0;
 
@@ -291,7 +304,7 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
 
   const video = page.video();
   await context.close();
-  await browser.close();
+  if (browser) await browser.close();
   const raw = path.join(outDir, 'raw.webm');
   if (video) {
     const p = await video.path();

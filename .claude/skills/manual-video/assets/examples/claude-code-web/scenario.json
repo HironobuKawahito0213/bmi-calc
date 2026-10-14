@@ -1,0 +1,49 @@
+{
+  "_comment": "claude.ai/code (Web版) の『開く〜最初の質問を送る』動画。セレクタはお手元の画面で inspect.js を使って確認してから実行してください。リポジトリ名 (bmi-calc) は自分のものに変えます。",
+  "title": "Claude Code (Web版) の始め方",
+  "description": "ブラウザで claude.ai/code を開き、リポジトリを選んで最初の質問を送るまでの流れです。",
+  "url": "https://claude.ai/code",
+  "profile": "~/.manual-video/claude-profile",
+  "channel": "chrome",
+  "viewport": { "width": 1280, "height": 800 },
+  "intro": "Claude Code の Web版を初めて使うときの流れを、4つのステップで説明します",
+  "outro": "以上が最初の質問を送るまでの流れです。次は『このファイルを直して』のように、作業をお願いしてみましょう",
+  "steps": [
+    {
+      "caption": "これが claude.ai/code の画面です。中央の入力欄に、Claude にやってほしいことを書きます",
+      "highlight": "textarea, [contenteditable=true]",
+      "wait": 4000
+    },
+    {
+      "action": "click",
+      "selector": "role=button[name=/repositor|リポジトリ/i]",
+      "caption": "まずリポジトリの選択ボタンを押して、作業したいリポジトリを選びます",
+      "note": "初回は GitHub との連携 (Connect GitHub) を先に済ませておきます。連携後にこの動画の操作が可能になります。"
+    },
+    {
+      "action": "click",
+      "selector": "text=bmi-calc",
+      "caption": "一覧から対象のリポジトリ (ここでは bmi-calc) を選びます",
+      "resultShot": true
+    },
+    {
+      "action": "fill",
+      "selector": "textarea, [contenteditable=true]",
+      "value": "このプロジェクトが何をしているか、初心者向けに説明してください",
+      "caption": "入力欄に最初の質問を書きます。最初はコードを変えない『説明して』系の質問が安心です",
+      "typeDelay": 50
+    },
+    {
+      "action": "click",
+      "selector": "role=button[name=/send|submit|start|送信|開始/i]",
+      "caption": "送信ボタンを押すと、Claude が新しいセッションを作って作業を始めます",
+      "wait": 20000,
+      "resultShot": true,
+      "note": "送信すると実際にセッションが作られ、利用量を消費します。"
+    },
+    {
+      "caption": "Claude がリポジトリを読んで回答してくれました。このように会話しながら開発を進められます",
+      "wait": 6000
+    }
+  ]
+}
