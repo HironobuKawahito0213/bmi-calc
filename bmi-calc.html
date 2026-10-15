@@ -1,15 +1,37 @@
-﻿<html lang="ja">
+<!DOCTYPE html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>git口座回目</title>
-    <script type="text/javascript" src="bmi-calc.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI計算機</title>
+    <link rel="stylesheet" href="bmi-calc.css">
+    <script src="bmi-calc.js" defer></script>
 </head>
 
 <body>
-<h1>BMI計算機</h1>
-<p>身長 : <input type="text" name="height" id="height">cm</p>
-<p>体重 : <input type="text" name="weight" id="weight">kg</p>
-<p><button name="calc" id="calc" onclick="calcBmi()">計算する</button></p>
-<p>BMI : <input type="text" name="bmi" id="bmi" readonly></p>
+<main class="card">
+    <h1>BMI計算機</h1>
+
+    <p class="field">
+        <label for="height">身長</label>
+        <input type="number" name="height" id="height" min="1" step="0.1" placeholder="170">
+        <span class="unit">cm</span>
+    </p>
+    <p class="field">
+        <label for="weight">体重</label>
+        <input type="number" name="weight" id="weight" min="1" step="0.1" placeholder="60">
+        <span class="unit">kg</span>
+    </p>
+
+    <p><button name="calc" id="calc" type="button">計算する</button></p>
+
+    <p class="error" id="error" hidden></p>
+
+    <div class="result" id="result" hidden>
+        <p>BMI : <output id="bmi"></output></p>
+        <p>判定 : <output id="category"></output></p>
+        <p>標準体重(BMI 22) : <output id="idealWeight"></output> kg</p>
+    </div>
+</main>
 </body>
 </html>

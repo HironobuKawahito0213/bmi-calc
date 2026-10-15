@@ -1,0 +1,71 @@
+body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+    margin: 0;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px 32px;
+    width: 100%;
+    max-width: 420px;
+}
+
+h1 {
+    font-size: 1.4rem;
+    margin-top: 0;
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.field label {
+    width: 3em;
+}
+
+.field input {
+    flex: 1;
+    padding: 8px;
+    font-size: 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    color: #fff;
+    background: #3182ce;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #2b6cb0;
+}
+
+.error {
+    color: #c53030;
+    font-size: 0.9rem;
+}
+
+.result {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.result output {
+    font-weight: bold;
+}
