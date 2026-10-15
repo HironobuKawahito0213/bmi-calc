@@ -14,6 +14,7 @@
   "intro": "〇〇の使い方を説明します", // 任意。null か "" でタイトルカードを省略
   "outro": "以上で説明は終わりです",   // 任意。null か "" で終了カードを省略
   "promptAnswer": "",                 // 任意。window.prompt への入力値
+  "actionTimeout": 10000,             // 任意。クリック等の操作の上限 ms (既定 10 秒。--check 時は 2 秒)
   "steps": [ /* 下記 */ ]
 }
 ```
@@ -33,6 +34,7 @@
   "screenshot": true,     // 任意。false でこのステップのスクショを撮らない
   "resultShot": false,    // 任意。true で操作後 (-after.png) も manual.md に載せる
   "note": "補足",         // 任意。manual.md にだけ出る引用文
+  "secret": false,        // 任意。fill で true にするとタイピング演出なしの一括入力になり、manual.md に値を載せない
   "narration": "...",     // 任意。音声用の読み上げ文 (省略時は caption)。"" で無音
   "name": "submit",       // 任意。スクショのファイル名に使う
   "typeDelay": 70         // 任意。fill のタイピング速度 ms/文字
@@ -64,3 +66,10 @@
 6. 字幕が読める時間 (文字数 × 180ms、最低 1.8 秒) だけ待つ
 
 `timeline.json` に各ステップの開始 ms が記録され、`compose.py` が音声合成の位置決めに使う。
+
+## --check モード (record.js)
+
+`node record.js scenario.json --out <dir> --check` で、録画・スクショ・待ち時間なしに
+全ステップを最速で実行し、ステップごとに OK / NG を表示する。結果は `<dir>/check-report.json` に
+書かれ、`timeline.json` や `manual.md` など本番の出力は上書きしない。NG があれば exit code 2。
+シナリオを書いたら本番録画の前に必ず 1 回通すこと。

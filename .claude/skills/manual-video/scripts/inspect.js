@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
 function loadPlaywright() {
   try { return require('playwright'); } catch (_) {}
   return require(path.join(execSync('npm root -g', { encoding: 'utf8' }).trim(), 'playwright'));
@@ -24,7 +25,7 @@ const out = opt('--out', 'inspect.png');
 (async () => {
   let browser = null, context;
   if (profile) {
-    const dir = profile.replace(/^~(?=$|\/)/, process.env.HOME || '');
+    const dir = profile.replace(/^~(?=$|[\/])/, os.homedir());
     context = await chromium.launchPersistentContext(dir, { headless: false, channel, viewport: { width: 1280, height: 720 } });
   } else {
     browser = await chromium.launch({ channel });

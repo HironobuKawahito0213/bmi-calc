@@ -48,18 +48,19 @@ def main():
     items.append(("outro", sc.get("outro", "以上で説明は終わりです")))
 
     result = {"voice": a.voice, "intro": None, "steps": [], "outro": None}
+    attempted = succeeded = 0
     for key, text in items:
         entry = None
         if text:
+            attempted += 1
             f = os.path.join(ndir, f"{key}.mp3")
             try:
                 asyncio.run(synth(text, f, a.voice, a.rate))
                 entry = {"file": f"narration/{key}.mp3", "ms": duration_ms(f), "text": text}
+                succeeded += 1
                 print(f"  {key}: {entry['ms']} ms  {text[:30]}")
-            except Exception as e:  # ネットワーク不可など
-                print(f"音声生成に失敗しました ({key}): {e}", file=sys.stderr)
-                print("ナレーションなしで続ける場合は、このまま record.js を実行してください。", file=sys.stderr)
-                sys.exit(1)
+            except Exception as e:  # 一時的な失敗なら該当ステップだけ無音にして続行する
+                print(f"音声生成に失敗しました ({key}): {e} — このステップは字幕のみにします", file=sys.stderr)
         if key == "intro":
             result["intro"] = entry
         elif key == "outro":
@@ -67,9 +68,12 @@ def main():
         else:
             result["steps"].append(entry)
 
+    if attempted and not succeeded:  # 全滅 = ネットワーク不可とみなし、字幕のみ動画に切り替えてもらう
+        print("すべての音声生成に失敗しました。ナレーションなし (字幕のみ) で record.js を実行してください。", file=sys.stderr)
+        sys.exit(1)
     with open(os.path.join(ndir, "narration.json"), "w", encoding="utf-8") as fp:
         json.dump(result, fp, ensure_ascii=False, indent=2)
-    print(f"done: {ndir}/narration.json")
+    print(f"done: {ndir}/narration.json ({succeeded}/{attempted} 件)")
 
 
 if __name__ == "__main__":

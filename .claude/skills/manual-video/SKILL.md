@@ -54,9 +54,13 @@ Claude の仕事は **「何をどの順で見せ、どう説明するか」の�
 
 ### 3. 生成する
 
+録画は 1 回数分かかるので、**先に `--check` でシナリオを数秒で検証する**とやり直しが減る。
+録画なし・待ち時間なしで全ステップを実行し、セレクタ切れだけを OK / NG で報告する。
+
 ```bash
 SKILL=<このスキルのディレクトリ>
-bash $SKILL/scripts/make_video.sh scenario.json ./manual-video --gif
+node $SKILL/scripts/record.js scenario.json --out ./manual-video --check   # 数秒で検証
+bash $SKILL/scripts/make_video.sh scenario.json ./manual-video --gif       # 本番生成
 ```
 
 オプション:
@@ -105,8 +109,9 @@ bash $SKILL/scripts/make_video.sh scenario.json ./manual-video --gif
 - **要素が見つからない**: Playwright のセレクタは `#id`、`text=計算する`、`button:has-text("送信")`、`[name=email]`、`role=button[name="保存"]` などが使える。開発者ツールで確認した `id` が最も壊れにくい。
 - **SPA でクリック後に真っ白な画面が撮れる**: `waitFor` に遷移先の要素を指定する。
 - **alert / confirm が出る**: 自動で OK を押して `manual.md` の「表示されるダイアログ」に記録する。`promptAnswer` で prompt の入力値を指定できる。
-- **ログインが必要**: ログイン操作自体をステップにする（パスワードは `fill` で入力されるので、動画に映る点に注意。ダミーアカウントを使う）。
+- **ログインが必要**: ログイン操作自体をステップにする。パスワードのステップには `"secret": true` を付けると、タイピング演出なしの一括入力になり、manual.md にも値が載らない（それでも映像には残るのでダミーアカウントを使う）。
 - **playwright がない**: `npm i -g playwright && npx playwright install chromium`。`ffmpeg` も必要。
+- **Windows**: Git Bash から実行する。`profile` の `~` は自動でホームに展開される。`python3` が無くても `python` にフォールバックする。
 - **長すぎる動画**: ステップを絞る。マニュアル動画は 1 本 1〜2 分、10 ステップ前後が見てもらえる上限。機能が多いなら機能ごとにシナリオを分けて複数本にする。
 
 ## 同梱スクリプト

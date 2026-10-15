@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
 function loadPlaywright() {
   try { return require('playwright'); } catch (_) {}
   return require(path.join(execSync('npm root -g', { encoding: 'utf8' }).trim(), 'playwright'));
@@ -17,7 +18,7 @@ const argv = process.argv.slice(2);
 const [profile, url] = argv;
 if (!profile || !url) { console.error('usage: node login.js <profileDir> <url> [--channel chrome]'); process.exit(1); }
 const channel = argv.includes('--channel') ? argv[argv.indexOf('--channel') + 1] : undefined;
-const dir = profile.replace(/^~(?=$|\/)/, process.env.HOME || '');
+const dir = profile.replace(/^~(?=$|[\/])/, os.homedir());
 fs.mkdirSync(dir, { recursive: true });
 (async () => {
   const context = await chromium.launchPersistentContext(dir, { headless: false, channel, viewport: { width: 1280, height: 720 } });

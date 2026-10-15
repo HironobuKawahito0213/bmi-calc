@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
 
 function loadPlaywright() {
   try { return require('playwright'); } catch (_) {}
@@ -27,10 +28,12 @@ const { chromium } = loadPlaywright();
 
 // ---------- 引数 ----------
 const argv = process.argv.slice(2);
-if (!argv[0]) { console.error('usage: node record.js <scenario.json> [--out dir] [--headed]'); process.exit(1); }
+if (!argv[0]) { console.error('usage: node record.js <scenario.json> [--out dir] [--headed] [--check]'); process.exit(1); }
 const scenarioPath = path.resolve(argv[0]);
 const outDir = path.resolve(argv.includes('--out') ? argv[argv.indexOf('--out') + 1] : 'manual-video');
 const headed = argv.includes('--headed');
+// --check: 録画せず最短の待ち時間でシナリオを通し、セレクタ切れだけを検証する
+const check = argv.includes('--check');
 const scenario = JSON.parse(fs.readFileSync(scenarioPath, 'utf8'));
 
 const shotDir = path.join(outDir, 'screenshots');
@@ -43,8 +46,10 @@ let narration = null;
 const narrPath = path.join(outDir, 'narration', 'narration.json');
 if (fs.existsSync(narrPath)) narration = JSON.parse(fs.readFileSync(narrPath, 'utf8'));
 
-const vw = (scenario.viewport && scenario.viewport.width) || 1280;
-const vh = (scenario.viewport && scenario.viewport.height) || 720;
+// H.264 (yuv420p) は奇数サイズを受け付けないので偶数に丸める
+const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+const vw = even((scenario.viewport && scenario.viewport.width) || 1280);
+const vh = even((scenario.viewport && scenario.viewport.height) || 720);
 const zoom = Number(scenario.zoom) || 1;
 
 // ---------- ページに注入するオーバーレイ ----------
@@ -76,7 +81,7 @@ const OVERLAY_JS = `(() => {
   document.documentElement.appendChild(root);
 })();`;
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, check ? Math.min(ms, 50) : ms));
 const ensureOverlay = async (page) => {
   await page.evaluate(OVERLAY_JS).catch(() => {});
   if (zoom !== 1) await page.evaluate((z) => { document.body.style.zoom = String(z); }, zoom).catch(() => {});
@@ -140,13 +145,13 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
   // (ログイン系サイトはヘッドレスを弾くことが多いため)。
   const ctxOpts = {
     viewport: { width: vw, height: vh },
-    recordVideo: { dir: videoDir, size: { width: vw, height: vh } },
+    ...(check ? {} : { recordVideo: { dir: videoDir, size: { width: vw, height: vh } } }),
     locale: scenario.locale || 'ja-JP',
     deviceScaleFactor: 1,
   };
   let browser = null, context, page;
   if (scenario.profile) {
-    const dir = scenario.profile.replace(/^~(?=$|\/)/, process.env.HOME || '');
+    const dir = scenario.profile.replace(/^~(?=$|[\/])/, os.homedir());
     fs.mkdirSync(dir, { recursive: true });
     const headless = headed ? false : (scenario.headless === true);
     context = await chromium.launchPersistentContext(dir, { ...ctxOpts, headless, channel: scenario.channel || undefined });
@@ -156,6 +161,8 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
     context = await browser.newContext(ctxOpts);
     page = await context.newPage();
   }
+  // 壊れたセレクタ1つで既定30秒×操作数ぶん止まるのを防ぐ (check 時はさらに短く)
+  context.setDefaultTimeout(check ? 2000 : Number(scenario.actionTimeout) || 10000);
   const t0 = Date.now();
   const rel = () => Date.now() - t0;
 
@@ -209,7 +216,7 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
     }
     await sleep(500);
 
-    if (step.screenshot !== false) {
+    if (step.screenshot !== false && !check) {
       const f = `${name}.png`;
       await page.screenshot({ path: path.join(shotDir, f) });
       entry.shots.before = `screenshots/${f}`;
@@ -227,7 +234,9 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
           await cursorClickEffect(page);
           await loc.click();
           await loc.fill('');
-          await loc.pressSequentially(String(step.value), { delay: step.typeDelay || 70 });
+          // secret: パスワード等。タイピング演出をせず一括入力する(それでも映像には残るのでダミー値推奨)
+          if (step.secret) await loc.fill(String(step.value));
+          else await loc.pressSequentially(String(step.value), { delay: step.typeDelay || 70 });
           break;
         case 'select':
           await cursorClickEffect(page);
@@ -272,7 +281,7 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
     await setCaption(page, label, step.caption); // ページ遷移で消えていたら復元
 
     // 操作後の状態も撮っておく (結果の説明に使える)
-    if (step.screenshot !== false && step.action && step.action !== 'none') {
+    if (step.screenshot !== false && step.action && step.action !== 'none' && !check) {
       await sleep(400);
       const f = `${name}-after.png`;
       await page.screenshot({ path: path.join(shotDir, f) });
@@ -311,10 +320,16 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
     fs.renameSync(p, raw);
   }
   fs.rmSync(videoDir, { recursive: true, force: true });
-  fs.writeFileSync(path.join(outDir, 'timeline.json'), JSON.stringify(timeline, null, 2));
-  fs.copyFileSync(scenarioPath, path.join(outDir, 'scenario.json'));
+  fs.writeFileSync(path.join(outDir, check ? 'check-report.json' : 'timeline.json'), JSON.stringify(timeline, null, 2));
+  if (!check) fs.copyFileSync(scenarioPath, path.join(outDir, 'scenario.json'));
 
   // --- Markdown マニュアル ---
+  if (check) {
+    for (const st of timeline.steps) console.log(`  ${st.error ? 'NG' : 'OK'}  STEP ${st.index}  ${st.caption}${st.error ? `  — ${st.error.split('\n')[0]}` : ''}`);
+    const ng = timeline.steps.filter((st) => st.error).length;
+    console.log(ng ? `check: ${ng} 件のステップが失敗 (check-report.json)` : 'check: 全ステップ OK');
+    process.exit(ng ? 2 : 0);
+  }
   const md = [];
   md.push(`# ${scenario.title}`, '');
   if (scenario.description) md.push(scenario.description, '');
@@ -323,6 +338,7 @@ function slug(s) { return (s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-
     md.push(`## ${s.label}: ${s.caption}`, '');
     if (s.shots.before) md.push(`![${s.label}](${s.shots.before})`, '');
     const orig = steps[s.index - 1];
+    if ((orig.action === 'fill' || orig.action === 'select') && orig.value !== undefined && !orig.secret) md.push(`入力値: \`${orig.value}\``, '');
     if (orig.resultShot && s.shots.after) md.push(`操作後の画面:`, '', `![${s.label} 結果](${s.shots.after})`, '');
     if (orig.note) md.push(`> ${orig.note}`, '');
     if (s.error) md.push(`> ⚠️ 自動操作でエラー: ${s.error}`, '');
